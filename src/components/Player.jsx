@@ -75,7 +75,7 @@ export default function Player({
           <img
             src={song?.cover}
             alt={song ? `${song.title} cover` : ''}
-            className="h-12 w-12 rounded-md object-cover"
+            className="h-12 w-12 rounded-sm object-cover"
           />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-white">

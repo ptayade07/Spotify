@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import SongList from './components/SongList.jsx';
 import TopBar from './components/TopBar.jsx';
+import NowPlaying from './components/NowPlaying.jsx';
 import { songs } from './data/songs.js';
 
 export default function App() {
@@ -11,6 +12,8 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLibraryExpanded, setIsLibraryExpanded] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  /** Right “Now Playing” column — Spotify-style collapse to a slim strip */
+  const [nowPlayingOpen, setNowPlayingOpen] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -118,7 +121,16 @@ export default function App() {
         <div className="h-full overflow-hidden rounded-lg bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.65)]">
           <Sidebar
             expanded={isSidebarExpanded}
-            onToggleExpanded={() => setIsSidebarExpanded((v) => !v)}
+            onToggleExpanded={() =>
+              setIsSidebarExpanded((v) => {
+                const next = !v;
+                if (next) setIsSidebarCollapsed(false);
+                return next;
+              })
+            }
+            libraryRailCollapsed={isSidebarCollapsed}
+            onLibraryRailCollapse={() => setIsSidebarCollapsed(true)}
+            onLibraryRailExpand={() => setIsSidebarCollapsed(false)}
           />
         </div>
 
@@ -141,9 +153,47 @@ export default function App() {
           </main>
         </div>
 
-        {/* Right-side container placeholder, same size as left when not expanded */}
+        {/* Now Playing column — full width or slim reopen handle when collapsed */}
         {!isSidebarExpanded && (
-          <div className="h-full w-[420px] overflow-hidden rounded-lg bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.65)]" />
+          <div
+            className={[
+              'h-full shrink-0 overflow-hidden rounded-lg bg-[#121212] shadow-[0_20px_60px_rgba(0,0,0,0.65)]',
+              'transition-[width] duration-200 ease-out',
+              nowPlayingOpen ? 'w-[405px]' : 'w-10',
+            ].join(' ')}
+          >
+            {nowPlayingOpen ? (
+              <NowPlaying
+                song={currentSong}
+                songs={songs}
+                currentIndex={currentIndex}
+                onSelectSong={selectSong}
+                onClosePanel={() => setNowPlayingOpen(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNowPlayingOpen(true)}
+                className="flex h-full w-full flex-col items-center justify-center border-0 bg-transparent px-0 text-[#b3b3b3] transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/35"
+                aria-label="Open Now Playing panel"
+                title="Now Playing"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-8 w-8 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.35"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                  aria-hidden="true"
+                >
+                  <path d="m14 8-4 4 4 4" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
 
         {/* Expanded sidebar overlays only the CONTENT area (not the top bar) */}
@@ -162,6 +212,9 @@ export default function App() {
               expanded={isSidebarExpanded}
               variant="expanded"
               onToggleExpanded={() => setIsSidebarExpanded(false)}
+              libraryRailCollapsed={false}
+              onLibraryRailCollapse={undefined}
+              onLibraryRailExpand={undefined}
             />
           </div>
         </div>
